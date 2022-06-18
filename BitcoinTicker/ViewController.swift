@@ -7,14 +7,20 @@
 //
 
 import UIKit
+import Alamofire
+import SwiftyJSON
 
 class ViewController: UIViewController, UIPickerViewDataSource, UIPickerViewDelegate {
 
     
     let baseURL = "https://apiv2.bitcoinaverage.com/indices/global/ticker/BTC"
-    let currencyArray = ["AUD", "BRL","CAD","CNY","EUR","GBP","HKD","IDR","ILS","INR","JPY","MXN","NOK","NZD","PLN","RON","RUB","SEK","SGD","USD","ZAR"]
+//    let currencyArray = ["AUD", "BRL","CAD","CNY","EUR","GBP","HKD","IDR","ILS","INR","JPY","MXN","NOK","NZD","PLN","RON","RUB","SEK","SGD","USD","ZAR"]
+    
+    let currencyArray = ["btc", "ltc","doge","eth","powr"]
+    
     var finalURL = ""
-
+    var selectedAltCoin = ""
+    
     //Pre-setup IBOutlets
     @IBOutlet weak var bitcoinPriceLabel: UILabel!
     @IBOutlet weak var currencyPicker: UIPickerView!
@@ -51,20 +57,27 @@ class ViewController: UIViewController, UIPickerViewDataSource, UIPickerViewDele
 //        print(row)
         print(currencyArray[row])
         
-        finalURL = baseURL + currencyArray[row]
+        //finalURL = baseURL + currencyArray[row]
+        selectedAltCoin = currencyArray[row]
+        
+        finalURL = "https://www.coinspot.com.au/pubapi/latest"
         print("FinalURL is \(finalURL)")
+        
+        getBitcoinData(url: finalURL)
+        
     }
     
 
     
     
     
-//    
-//    //MARK: - Networking
-//    /***************************************************************/
-//    
+    
+    //MARK: - Networking
+    /***************************************************************/
+    
 //    func getWeatherData(url: String, parameters: [String : String]) {
-//        
+    func getBitcoinData(url: String) {
+        
 //        Alamofire.request(url, method: .get, parameters: parameters)
 //            .responseJSON { response in
 //                if response.result.isSuccess {
@@ -79,29 +92,66 @@ class ViewController: UIViewController, UIPickerViewDataSource, UIPickerViewDele
 //                    self.bitcoinPriceLabel.text = "Connection Issues"
 //                }
 //            }
-//
-//    }
-//
-//    
-//    
-//    
-//    
-//    //MARK: - JSON Parsing
-//    /***************************************************************/
-//    
-//    func updateWeatherData(json : JSON) {
-//        
-//        if let tempResult = json["main"]["temp"].double {
-//        
+        
+        Alamofire.request(url, method: .get)
+            .responseJSON { response in
+                if response.result.isSuccess {
+
+                    print("Sucess! Got the bitcoin data")
+                    let bitcoinJSON : JSON = JSON(response.result.value!)
+
+//                    self.updateWeatherData(json: weatherJSON)
+                    self.updateBitcoinData(json: bitcoinJSON)
+
+                } else {
+                    print("Error: \(String(describing: response.result.error))")
+                    self.bitcoinPriceLabel.text = "Connection Issues"
+                }
+            }
+
+    }
+
+    
+    
+    
+    
+    //MARK: - JSON Parsing
+    /***************************************************************/
+    
+    func updateBitcoinData(json : JSON) {
+
+        //if let tempResult = json["main"]["temp"].double {
+
 //        weatherData.temperature = Int(round(tempResult!) - 273.15)
 //        weatherData.city = json["name"].stringValue
 //        weatherData.condition = json["weather"][0]["id"].intValue
 //        weatherData.weatherIconName =    weatherData.updateWeatherIcon(condition: weatherData.condition)
-//        }
-//        
+        //}
+        
+        // -- Just get the bitcoin data for now
+        let apiStatus = json["status"]
+//        let bitcoinPrice = json["prices"]["btc"]["last"]
+        let bitcoinPrice = json["prices"][selectedAltCoin]["last"]
+        
+        
+        let numberFormatter = NumberFormatter()
+        numberFormatter.numberStyle = .currency
+        
+        var bitcoinPriceCurrency = numberFormatter.string(for: bitcoinPrice)
+        
+        print ("apiStatus: \(apiStatus)")
+        print ("bitcoinPrice: \(bitcoinPrice)")
+        print ("bitcoinPriceCurrency: \(bitcoinPriceCurrency)")
+        
+        // -- Display the day if apiStatus = "OK"
+        if apiStatus == "ok" {
+            bitcoinPriceLabel.text = "\(bitcoinPrice)"
+        }
+        
+
 //        updateUIWithWeatherData()
-//    }
-//    
+    }
+    
 
 
 
